@@ -22,7 +22,7 @@ router.get("/:code", async (req, res, next) => {
     if (results.rows.length === 0) {
       throw new ExpressError(`${code} could not be found.`, 404);
     }
-    return res.json({ company: results.rows });
+    return res.json({ company: results.rows[0] });
   } catch (err) {
     return next(err);
   }
@@ -36,7 +36,7 @@ router.post("/", async (req, res, next) => {
       "INSERT INTO companies (code, name, description) VALUES ($1, $2, $3) RETURNING code, name, description",
       [code, name, description]
     );
-    return res.json({ company: results.rows });
+    return res.json({ company: results.rows[0] });
   } catch (err) {
     return next(err);
   }
@@ -53,7 +53,7 @@ router.put("/:code", async (req, res, next) => {
     if (results.rows.length === 0) {
       throw new ExpressError(`${code} cannot be found`, 404);
     }
-    return res.json({ company: results.rows });
+    return res.json({ company: results.rows[0] });
   } catch (err) {
     next(err);
   }
