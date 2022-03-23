@@ -1,4 +1,5 @@
 const express = require("express");
+const { response } = require("../app");
 const router = new express.Router();
 const db = require("../db");
 const ExpressError = require("../expressError");
@@ -22,7 +23,6 @@ router.get("/:id", async (req, res, next) => {
       [id]
     );
     const data = results.rows[0];
-    console.log(data);
     if (!data) {
       throw new ExpressError(`Invoice id of ${id} could not be found`, 404);
     }
@@ -50,10 +50,45 @@ router.post("/", async (req, res, next) => {
     const { comp_code, amt } = req.body;
 
     const results = await db.query(
-      "INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING (id, comp_code, amt, paid, add_date, paid_date)",
+      "INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, add_date, paid_date",
       [comp_code, amt]
     );
     return res.json({ invoice: results.rows[0] });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.put("/:id", async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const { amt } = req.body;
+    const results = await db.query(
+      "UPDATE invoices SET amt=$2 WHERE id=$1 RETURNING id, comp_code, amt, paid, add_date, paid_date",
+      [id, amt]
+    );
+    let data = results.rows[0];
+    if (!data) {
+      throw new ExpressError(
+        `An invoice with an id of ${id} could not be found`,
+        404
+      );
+    }
+    return res.json({ invoice: data });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.delete("/:id", async (req, res, next) => {
+  const { id } = req.params;
+  try {
+    const results = await db.query("DELETE FROM invoices WHERE id=$1", [id]);
+    let data = results.rows[0];
+    if (!data) {
+      throw new ExpressError("ID not found", 404);
+    }
+    return res.json({ status: "deleted" });
   } catch (err) {
     return next(err);
   }
