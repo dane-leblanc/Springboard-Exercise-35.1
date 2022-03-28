@@ -6,10 +6,8 @@ const ExpressError = require("../expressError");
 
 router.get("/", async (req, res, next) => {
   try {
-    const results = await db.query(
-      "SELECT id, comp_code, amt, paid, add_date, paid_date FROM invoices"
-    );
-    return res.json({ invoice: results.rows });
+    const results = await db.query("SELECT id, comp_code FROM invoices");
+    return res.json({ invoices: results.rows });
   } catch (err) {
     return next(err);
   }
@@ -62,10 +60,31 @@ router.post("/", async (req, res, next) => {
 router.put("/:id", async (req, res, next) => {
   const { id } = req.params;
   try {
-    const { amt } = req.body;
+    const { amt, paid } = req.body;
+    let paidDate = null;
+    const currResult = await db.query(
+      `SELECT paid
+        FROM invoices
+        WHERE id = $1`,
+      [id]
+    );
+
+    const currPaidDate = currResult.rows[0].paid_data;
+
+    if (!currPaidDate && paid) {
+      paidDate = new Date();
+    } else if (!paid) {
+      paidDate = null;
+    } else {
+      paidDate = currPaidDate;
+    }
+
     const results = await db.query(
-      "UPDATE invoices SET amt=$2 WHERE id=$1 RETURNING id, comp_code, amt, paid, add_date, paid_date",
-      [id, amt]
+      `UPDATE invoices 
+        SET amt=$2, paid=$3, paid_date=$4
+        WHERE id=$1 
+        RETURNING id, comp_code, amt, paid, add_date, paid_date`,
+      [id, amt, paid, paidDate]
     );
     let data = results.rows[0];
     if (!data) {
