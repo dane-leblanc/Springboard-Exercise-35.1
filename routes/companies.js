@@ -24,12 +24,23 @@ router.get("/:code", async (req, res, next) => {
       "SELECT id, amt, add_date, paid_date FROM invoices WHERE comp_code=$1",
       [code]
     );
+    const industryResults = await db.query(
+      `SELECT i.name
+      FROM companies c
+      JOIN companies_industries ci
+      ON c.code = ci.comp_code
+      JOIN industries i
+      ON ci.ind_code = i.code
+      WHERE c.code=$1`,
+      [code]
+    );
     if (compResults.rows.length === 0) {
       throw new ExpressError(`${code} could not be found.`, 404);
     }
     return res.json({
       company: compResults.rows[0],
       invoices: invResults.rows,
+      industries: industryResults.rows,
     });
   } catch (err) {
     return next(err);
