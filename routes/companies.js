@@ -80,16 +80,16 @@ router.put("/:code", async (req, res, next) => {
   }
 });
 
-router.patch("/:code", async (req, res, next) => {
-  const { code } = req.params;
+router.patch("/:companyCode", async (req, res, next) => {
+  const { companyCode } = req.params;
   try {
     const { industryCode } = req.body;
     const results = await db.query(
       `INSERT INTO companies_industries (comp_code, ind_code)
         VALUES ($1, $2)`,
-      [code, industryCode]
+      [companyCode, industryCode]
     );
-    return res.json({ message: `${industryCode} added to ${code}` });
+    return res.json({ message: `${industryCode} added to ${companyCode}` });
   } catch (err) {
     next(err);
   }
