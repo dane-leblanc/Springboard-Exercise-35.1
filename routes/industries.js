@@ -1,4 +1,5 @@
 const express = require("express");
+const { rows } = require("pg/lib/defaults");
 const router = new express.Router();
 const db = require("../db");
 const ExpressError = require("../expressError");
@@ -9,16 +10,39 @@ router.get("/", async (req, res, next) => {
       `SELECT code, name
             FROM industries`
     );
+
     const companiesResults = await db.query(
-        `SELECT c.code
+      `SELECT i.code AS i_code, c.code AS c_code
         FROM industries i
         JOIN companies_industries ci
         ON i.code = ci.ind_code
         JOIN companies c
         ON ci.comp_code = c.code`
-    )
-    return res.json({ industries: industryResults.rows,
-    companies: companiesResults.rows});
+    );
+
+    let industryToCompanyMap = {};
+
+    companiesResults.rows.forEach((record) => {
+      if (industryToCompanyMap[record.i_code] == undefined) {
+        industryToCompanyMap[record.i_code] = [];
+      }
+      industryToCompanyMap[record.i_code].push(record.c_code);
+    });
+
+    let results = [];
+
+    industryResults.rows.forEach((row) => {
+      let industryObj = {
+        industryCode: row.code,
+        industryName: row.name,
+        companies: industryToCompanyMap[row.code],
+      };
+      results.push(industryObj);
+    });
+
+    return res.json({
+      industries: results,
+    });
   } catch (err) {
     return next(err);
   }
