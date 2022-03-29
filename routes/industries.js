@@ -48,4 +48,20 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.post("/", async (req, res, next) => {
+  try {
+    const { code, name } = req.body;
+
+    const results = await db.query(
+      `INSERT INTO industries (code, name)
+            VALUES ($1, $2)
+            RETURNING code, name`,
+      [code, name]
+    );
+    return res.json({ industry: results.rows[0] });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 module.exports = router;

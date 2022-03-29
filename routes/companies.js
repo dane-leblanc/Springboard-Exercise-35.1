@@ -80,6 +80,21 @@ router.put("/:code", async (req, res, next) => {
   }
 });
 
+router.patch("/:code", async (req, res, next) => {
+  const { code } = req.params;
+  try {
+    const { industryCode } = req.body;
+    const results = await db.query(
+      `INSERT INTO companies_industries (comp_code, ind_code)
+        VALUES ($1, $2)`,
+      [code, industryCode]
+    );
+    return res.json({ message: `${industryCode} added to ${code}` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete("/:code", async (req, res, next) => {
   const { code } = req.params;
   try {
